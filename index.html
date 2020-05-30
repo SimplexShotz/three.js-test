@@ -17,21 +17,27 @@
     <script src="js/OrbitControls.js"></script>
 		<script>
 
-			document.addEventListener("mousedown", function(e) {
-				console.log(e.button);
-			});
+			// document.addEventListener("mousedown", function(e) {
+			// 	console.log(e.button);
+			// });
+
+			document.addEventListener("mousedown", onMouseDown);
+			document.addEventListener("mousemove", onMouseMove);
+			document.addEventListener("mouseup", onMouseUp);
 
 			var optimizeOnStart = false;
 
 			var camera, scene, renderer;
 			var plane;
-			var mouse, raycaster;
+			var mousePos, mouseMoved, raycaster;
+
+			raycaster = new THREE.Raycaster();
+			mouseMoved = 0;
+			mousePos = new THREE.Vector2();
 
 			var cube; // TODO: fix
 
-			var objects = {
-				tiles: []
-			};
+			var objects = [];
 
       // TUTORIAL (for future reference):
       // https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene
@@ -51,6 +57,11 @@
       camera.lookAt(0, 0, 0);
       // Add orbit controls for the camera:
       var controls = new THREE.OrbitControls(camera);
+			// controls.mouseButtons = {
+			// 	LEFT: THREE.MOUSE.ROTATE,
+			// 	MIDDLE: THREE.MOUSE.DOLLY,
+			// 	RIGHT: THREE.MOUSE.ROTATE
+			// }
 
       var renderer = new THREE.WebGLRenderer();
       renderer.setPixelRatio(window.devicePixelRatio / 0.5);
@@ -66,6 +77,7 @@
 			plane.rotation.x = Math.PI / 2;
 			plane.position.y = -0.01;
 			scene.add(plane);
+			objects.push(plane);
 
       // Make a CUBE!
       // Creates the GEOMETRY for the cube:
@@ -157,10 +169,46 @@
 			animate();
 
       function draw() {
-        // cube.rotation.x += 0.01;
-        // cube.rotation.y += 0.01;
-        camera.lookAt(0, 0, 0);
+
       }
+
+			function onMouseDown(event) {
+				mouseMoved = 0;
+			}
+			function onMouseMove(event) {
+				mouseMoved++;
+			}
+
+			function onMouseUp(event) {
+
+				event.preventDefault();
+
+				mousePos.set( ( event.clientX / window.innerWidth ) * 2 - 1, - ( event.clientY / window.innerHeight ) * 2 + 1 );
+
+				if (mouseMoved <= 3) { // Make sure the mouse HAS NOT moved (more than 3 pixels)
+					raycaster.setFromCamera( mousePos, camera );
+
+					var intersects = raycaster.intersectObjects( objects );
+
+					if ( intersects.length > 0 ) {
+
+						var intersect = intersects[ 0 ];
+
+						// delete cube
+
+							var voxel = new THREE.Mesh( geometry, material );
+							voxel.position.copy( intersect.point );//.add( intersect.face.normal );
+							// voxel.position.divideScalar( 1 ).floor().multiplyScalar( 1 ).addScalar( 0.5 );
+							// voxel.position.x += 1;
+							scene.add( voxel );
+
+							objects.push( voxel );
+						// render();
+
+					}
+				}
+
+			}
 		</script>
 	</body>
 </html>
