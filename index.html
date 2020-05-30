@@ -11,19 +11,42 @@
 		</style>
 	</head>
 	<body>
-    <p id="FPS" style="position: absolute; top: 20px; left: 20px; color: white; z-index: 1;">Loading...</p>
+    <p id="FPS" style="position: absolute; top: 20px; left: 20px; color: rgb(100, 200, 255); z-index: 1;">Loading...</p>
     <div id="overlay" style="background-color: rgb(25, 25, 25); color: rgb(255, 255, 255); position: absolute; top: 0px; bottom: 0px; left: 0px; right: 0px; z-index: 2; text-align: center; font-size: 20pt;"><p style="width: 80%; margin: 0px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">Please wait while the game runs a few optimization tests.<br>Ready in <span id="ready-in">15</span> second(s).</p></div>
 		<script src="js/three.js"></script>
     <script src="js/OrbitControls.js"></script>
 		<script>
 
+			document.addEventListener("mousedown", function(e) {
+				console.log(e.button);
+			});
+
+			var optimizeOnStart = false;
+
+			var camera, scene, renderer;
+			var plane;
+			var mouse, raycaster;
+
+			var cube; // TODO: fix
+
+			var objects = {
+				tiles: []
+			};
+
       // TUTORIAL (for future reference):
       // https://threejs.org/docs/index.html#manual/en/introduction/Creating-a-scene
 
+			init();
+
+			function init() {
+
+			}
+
       // Create our scene, camera, and renderer
       var scene = new THREE.Scene();
+			scene.background = new THREE.Color("rgb(255, 255, 255)");
       //                                      FOV, RATIO,                                  CLIP DISTANCE (near, far)
-      var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+      var camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.01, 1000);
       camera.position.set(10, 10, 10);
       camera.lookAt(0, 0, 0);
       // Add orbit controls for the camera:
@@ -42,9 +65,25 @@
       // Creates the MATERIAL for the cube:
       var material = new THREE.MeshLambertMaterial({ color: 0x00ff00 });
       // MESHES the geometry and the material together to create our cube:
-      var cube = new THREE.Mesh(geometry, material);
-      // Add the cube to our scene:
-      scene.add(cube);
+      // var cube = new THREE.Mesh(geometry, material);
+			var cube;
+      // Add the cubes to our scene:
+			// for (var x = 0; x < 10; x++) {
+			// 	for (var z = 0; z < 10; z++) {
+			// 		cube = new THREE.Mesh(geometry, material);
+			// 		cube.position.set(x, -0.05, z);
+			// 		cube.scale.set(0.9, 0.1, 0.9);
+			// 		cube.name = "tile_" + x + "-" + z;
+		  //     scene.add(cube);
+			// 		objects.tiles.push(cube);
+			// 	}
+			// }
+
+			var size = 10;
+			var divisions = 10;
+
+			var gridHelper = new THREE.GridHelper(size, divisions);
+			scene.add(gridHelper);
 
       // Directional light:
       var directionalLight = new THREE.DirectionalLight(0xffffff, 1);
@@ -71,7 +110,8 @@
         requestAnimationFrame(animate);
         controls.update();
         frame++;
-        if (new Date().getTime() - time >= 1000) {
+				var d = new Date().getTime();
+        if (d - time >= 1000) {
           document.getElementById("FPS").innerHTML = frame + " FPS (" + ratioMultiplier + ")";
 
           totalFrames += frame;
@@ -81,24 +121,32 @@
           frame = 0;
           time += 1000;
 
-          // Every 10 seconds, update the resolution (if the average FPS is below 30):
-          if (totalSeconds >= 5 && totalSeconds % 5 === 0 && (totalFrames / totalSeconds) <= 30) {
-            ratioMultiplier += 0.5;
-            renderer.setPixelRatio(window.devicePixelRatio / ratioMultiplier);
-          }
-          if (totalSeconds < 16) {
-            document.getElementById("ready-in").innerHTML = 15 - totalSeconds;
-          }
-          // After 16 seconds, hide the overlay:
-          if (totalSeconds === 16) {
-            document.getElementById("overlay").style.display = "none";
-          }
+					while (d - time >= 2000) { // Keep "time" up to date; see the next comment below for more info:
+	          time += 1000;
+					}
+
+					if (d - time <= 1000) { // When you leave the tab, "time" freezes. This prevents the canvas from getting all fuzzy due to the frame rate being low while on another tab.
+	          // Every 10 seconds, update the resolution (if the average FPS is below 30):
+	          if (totalSeconds >= 5 && totalSeconds % 5 === 0 && (totalFrames / totalSeconds) <= 30) {
+	            ratioMultiplier += 0.5;
+	            renderer.setPixelRatio(window.devicePixelRatio / ratioMultiplier);
+							totalFrames = 0;
+				      totalSeconds = 0;
+	          }
+	          if (totalSeconds < 16) {
+	            document.getElementById("ready-in").innerHTML = 15 - totalSeconds;
+	          }
+	          // After 16 seconds, hide the overlay:
+	          if (totalSeconds === 16 || !optimizeOnStart) {
+	            document.getElementById("overlay").style.display = "none";
+          	}
+					}
 
         }
         draw();
       	renderer.render(scene, camera);
       }
-      animate();
+			animate();
 
       function draw() {
         // cube.rotation.x += 0.01;
