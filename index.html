@@ -59,6 +59,14 @@
       // Display the rendered image:
       document.body.appendChild(renderer.domElement);
 
+			// Make the plane:
+			var geometry = new THREE.PlaneGeometry(10, 10);
+			var material = new THREE.MeshBasicMaterial({color: 0x323232, side: THREE.DoubleSide});
+			var plane = new THREE.Mesh(geometry, material);
+			plane.rotation.x = Math.PI / 2;
+			plane.position.y = -0.01;
+			scene.add(plane);
+
       // Make a CUBE!
       // Creates the GEOMETRY for the cube:
       var geometry = new THREE.BoxGeometry();
@@ -82,7 +90,7 @@
 			var size = 10;
 			var divisions = 10;
 
-			var gridHelper = new THREE.GridHelper(size, divisions);
+			var gridHelper = new THREE.GridHelper(size, divisions, 0x646464, 0xc8c8c8);
 			scene.add(gridHelper);
 
       // Directional light:
